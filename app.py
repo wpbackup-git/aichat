@@ -5,7 +5,16 @@ import json
 
 # Load Firebase credentials from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
-firebase_key = json.loads(firebase_key_str)
+
+# Debugging: print the key to check its format
+st.write("Firebase Key: ", firebase_key_str)
+
+# Try loading the JSON string
+try:
+    firebase_key = json.loads(firebase_key_str)
+except json.decoder.JSONDecodeError as e:
+    st.error(f"JSON Decode Error: {str(e)}")
+    st.stop()
 
 # Initialize Firebase app
 cred = credentials.Certificate(firebase_key)
@@ -13,6 +22,7 @@ firebase_admin.initialize_app(cred)
 
 # Initialize Firestore
 db = firestore.client()
+
 
 # Now you can use Firestore and Firebase functionality
 
