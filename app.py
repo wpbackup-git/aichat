@@ -16,7 +16,7 @@ except json.decoder.JSONDecodeError as e:
     st.error(f"JSON Decode Error: {str(e)}")
     st.stop()
 
-# Initialize Firebase app if not already initialized
+# Initialize Firebase app only if not already initialized
 if not firebase_admin._apps:
     cred = credentials.Certificate(firebase_key)  # Firebase service key
     firebase_admin.initialize_app(cred)
