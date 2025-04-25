@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import streamlit as st
 
-# Firebase Initialization
+# Initialize Firebase Admin SDK (only once)
 if not firebase_admin._apps:
     cred = credentials.Certificate({
         "type": st.secrets["firebase"]["type"],
@@ -20,11 +20,11 @@ if not firebase_admin._apps:
     })
     firebase_admin.initialize_app(cred)
 
-# Firestore client
+# Initialize Firestore client
 db = firestore.client()
 
-# Test Firestore Write Button - Added this block properly
-def test_firestore_connection():
+# Test Firestore connection on button click
+if st.button("Test Firestore Connection"):
     try:
         test_doc = {
             "test": "Hello World",
@@ -35,18 +35,13 @@ def test_firestore_connection():
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
-# Trigger for button press
-if st.button("Test Firestore Connection"):
-    test_firestore_connection()
-
 # Groq API settings
-GROQ_API_KEY = "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"
+GROQ_API_KEY = "your_groq_api_key"
 GROQ_MODEL = "llama3-8b-8192"
 
 st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
 st.title("🤖 AI Chatbot")
 
-# Initialize session state for messages if not already initialized
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -55,7 +50,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Input box for user prompt
+# Input box
 prompt = st.chat_input("Type your message...")
 
 if prompt:
@@ -83,13 +78,13 @@ if prompt:
     with st.chat_message("assistant"):
         st.markdown(reply)
 
-    # Save chat history to Firebase
+    # Save to Firebase
     try:
         db.collection("chat_history").add({
             "prompt": prompt,
             "response": reply,
             "timestamp": datetime.utcnow()
         })
-        st.success("Chat saved to Firestore!")
+        st.success("Chat saved to Firestore.")
     except Exception as e:
-        st.error(f"Error saving to Firestore: {e}")
+        st.error(f"Error saving chat to Firestore: {e}")
