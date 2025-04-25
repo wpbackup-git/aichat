@@ -1,12 +1,17 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import os
+import json
 import time
-from google.api_core.exceptions import RetryError
+
+# Get the firebase_key from Streamlit secrets
+firebase_key_str = st.secrets["firebase"]["key"]
+
+# Parse the JSON string into a dictionary
+firebase_key = json.loads(firebase_key_str)
 
 # Initialize Firebase
-cred = credentials.Certificate(os.getenv("GOOGLE_APPLICATION_CREDENTIALS"))
+cred = credentials.Certificate(firebase_key)
 firebase_admin.initialize_app(cred)
 
 # Initialize Firestore
@@ -14,26 +19,21 @@ db = firestore.client()
 
 # Function to add messages to Firestore with retry logic
 def add_to_firestore(data):
-    for _ in range(5):  # Try up to 5 times
+    retry_attempts = 5
+    for attempt in range(retry_attempts):
         try:
             # Add data to Firestore collection
             db.collection("chat_history").add(data)
             st.success("Message added to chat history.")
-            break  # If successful, exit the loop
-        except RetryError as e:
-            st.error(f"Retrying due to error: {e}")
-            time.sleep(2)  # Wait for 2 seconds before retrying
-
-# Function to display chat history
-def display_chat_history():
-    try:
-        # Fetch all messages from Firestore
-        chats_ref = db.collection("chat_history").order_by("timestamp").stream()
-        for chat in chats_ref:
-            message = chat.to_dict()
-            st.write(f"{message['timestamp']} - {message['message']}")
-    except Exception as e:
-        st.error(f"Error fetching chat history: {e}")
+            break
+        except Exception as e:
+            st.error(f"Error: {e}")
+            if attempt < retry_attempts - 1:
+                st.info(f"Retrying... Attempt {attempt + 2}/{retry_attempts}")
+                time.sleep(3)  # Delay before retrying
+            else:
+                st.error("Failed to add message after several attempts.")
+                break
 
 # Streamlit UI
 st.title("AI Chat App")
@@ -52,7 +52,10 @@ if st.button("Send"):
     else:
         st.warning("Please enter a message.")
 
-# Display chat history
-st.subheader("Chat History:")
-display_chat_history()
+# Display the chat history
+st.subheader("Chat History")
+messages_ref = db.collection("chat_history").order_by("timestamp", direction=firestore.Query.ASCENDING)
+messages = messages_ref.stream()
 
+for msg in messages:
+    st.write(f"**{msg.to_dict()['message']}**")
