@@ -11,16 +11,17 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-# 🔥 Test Firestore Write
-try:
-    test_doc = {
-        "test": "Hello World",
-        "timestamp": firestore.SERVER_TIMESTAMP
-    }
-    db.collection("test_collection").add(test_doc)
-    st.success("Test Write Success! Check Firestore.")
-except Exception as e:
-    st.error(f"Error: {e}")
+if st.button("Test Firestore Connection"):
+    try:
+        test_doc = {
+            "test": "Hello World",
+            "timestamp": firestore.SERVER_TIMESTAMP
+        }
+        db.collection("test_collection").add(test_doc)
+        st.success("✅ Test Write Success! Check Firestore.")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
+
 
 # Groq API settings
 GROQ_API_KEY = "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"
