@@ -4,12 +4,26 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 
-# Initialize Firebase
+# Initialize Firebase using Streamlit secrets
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")  # Directly reference the firebase_key.json file
+    cred = credentials.Certificate({
+        "type": st.secrets["firebase"]["type"],
+        "project_id": st.secrets["firebase"]["project_id"],
+        "private_key_id": st.secrets["firebase"]["private_key_id"],
+        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),  # Handle newline escape sequences
+        "client_email": st.secrets["firebase"]["client_email"],
+        "client_id": st.secrets["firebase"]["client_id"],
+        "auth_uri": st.secrets["firebase"]["auth_uri"],
+        "token_uri": st.secrets["firebase"]["token_uri"],
+        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
+    })
     firebase_admin.initialize_app(cred)
 
 db = firestore.client()
+
+# Your chatbot logic continues as usual...
+
 
 # Groq API settings
 GROQ_API_KEY = "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"
