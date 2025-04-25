@@ -2,6 +2,7 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+import time
 
 # Load Firebase credentials from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
@@ -17,15 +18,16 @@ except json.decoder.JSONDecodeError as e:
     st.stop()
 
 # Initialize Firebase app
-cred = credentials.Certificate(firebase_key)
-firebase_admin.initialize_app(cred)
+try:
+    cred = credentials.Certificate(firebase_key)
+    firebase_admin.initialize_app(cred)
+    st.success("Firebase initialized successfully.")
+except Exception as e:
+    st.error(f"Firebase initialization failed: {str(e)}")
+    st.stop()
 
 # Initialize Firestore
 db = firestore.client()
-
-
-# Now you can use Firestore and Firebase functionality
-
 
 # Function to add messages to Firestore with retry logic
 def add_to_firestore(data):
@@ -67,5 +69,10 @@ st.subheader("Chat History")
 messages_ref = db.collection("chat_history").order_by("timestamp", direction=firestore.Query.ASCENDING)
 messages = messages_ref.stream()
 
-for msg in messages:
-    st.write(f"**{msg.to_dict()['message']}**")
+# Ensure the messages are displayed correctly
+if not messages:
+    st.write("No messages available.")
+else:
+    for msg in messages:
+        msg_data = msg.to_dict()
+        st.write(f"**{msg_data['message']}** ({msg_data['timestamp']})")
