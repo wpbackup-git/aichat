@@ -6,8 +6,9 @@ from datetime import datetime
 
 # Initialize Firebase
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
+    cred = credentials.Certificate("firebase_key.json")  # Directly reference the firebase_key.json file
     firebase_admin.initialize_app(cred)
+
 db = firestore.client()
 
 # Groq API settings
