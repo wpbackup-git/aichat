@@ -23,8 +23,8 @@ if not firebase_admin._apps:
 # Firestore client
 db = firestore.client()
 
-# Test Firestore Write Button
-if st.button("Test Firestore Connection"):
+# Test Firestore Write Button - Added this block properly
+def test_firestore_connection():
     try:
         test_doc = {
             "test": "Hello World",
@@ -34,6 +34,10 @@ if st.button("Test Firestore Connection"):
         st.success("✅ Test Write Success! Check Firestore.")
     except Exception as e:
         st.error(f"❌ Error: {e}")
+
+# Trigger for button press
+if st.button("Test Firestore Connection"):
+    test_firestore_connection()
 
 # Groq API settings
 GROQ_API_KEY = "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"
