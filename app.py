@@ -1,25 +1,19 @@
 import streamlit as st
-import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
-from datetime import datetime
+import json
 
-# Initialize Firebase using Streamlit secrets
+# Check if Firebase has already been initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate({
-        "type": st.secrets["firebase"]["type"],
-        "project_id": st.secrets["firebase"]["project_id"],
-        "private_key_id": st.secrets["firebase"]["private_key_id"],
-        "private_key": st.secrets["firebase"]["private_key"].replace("\\n", "\n"),  # Handle newline escape sequences
-        "client_email": st.secrets["firebase"]["client_email"],
-        "client_id": st.secrets["firebase"]["client_id"],
-        "auth_uri": st.secrets["firebase"]["auth_uri"],
-        "token_uri": st.secrets["firebase"]["token_uri"],
-        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
-    })
+    # Load the Firebase credentials from Streamlit secrets
+    cred_dict = json.loads(st.secrets["firebase"]["private_key"])  # Load the private key string from secrets
+    cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")  # Fix line breaks in the private key
+    
+    # Initialize Firebase with the loaded credentials
+    cred = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cred)
 
+# Firestore client
 db = firestore.client()
 
 # Your chatbot logic continues as usual...
