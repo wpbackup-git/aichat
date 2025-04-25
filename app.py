@@ -26,27 +26,32 @@ else:
 # Initialize Firestore
 db = firestore.client()
 
-# Function to add messages to Firestore
+# Function to add messages to Firestore with retry logic
 def add_to_firestore(data):
     retry_attempts = 5
+    retry_message = st.empty()  # Create an empty placeholder for retry message
+
     for attempt in range(retry_attempts):
         try:
+            # Add data to Firestore collection
             db.collection("chat_history").add(data)
             st.success("Message added to chat history.")
             break
         except Exception as e:
-            st.error(f"Error: {e}")
+            retry_message.write(f"Error: {e}")
             if attempt < retry_attempts - 1:
-                st.info(f"Retrying... Attempt {attempt + 2}/{retry_attempts}")
-                time.sleep(3)
+                retry_message.info(f"Retrying... Attempt {attempt + 2}/{retry_attempts}")
             else:
                 st.error("Failed to add message after several attempts.")
                 break
 
 # Streamlit UI
 st.title("AI Chat App")
+
+# Input fields for user message
 user_message = st.text_input("Enter your message:")
 
+# Button to submit message
 if st.button("Send"):
     if user_message:
         message_data = {
@@ -63,7 +68,4 @@ messages_ref = db.collection("chat_history").order_by("timestamp", direction=fir
 messages = messages_ref.stream()
 
 for msg in messages:
-    msg_data = msg.to_dict()
-    ts = msg_data.get("timestamp")
-    readable_time = ts.strftime("%Y-%m-%d %H:%M:%S") if ts else "Time not available"
-    st.markdown(f"🗨️ **{msg_data['message']}**  \n🕒 *{readable_time}*")
+    st.write(f"**{msg.to_dict()['message']}**")
