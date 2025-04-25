@@ -4,9 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import streamlit as st
 
-import json
-
-# Only initialize once
+# Firebase Initialization
 if not firebase_admin._apps:
     cred = credentials.Certificate({
         "type": st.secrets["firebase"]["type"],
@@ -22,6 +20,10 @@ if not firebase_admin._apps:
     })
     firebase_admin.initialize_app(cred)
 
+# Firestore client
+db = firestore.client()
+
+# Test Firestore Write Button
 if st.button("Test Firestore Connection"):
     try:
         test_doc = {
@@ -33,15 +35,6 @@ if st.button("Test Firestore Connection"):
     except Exception as e:
         st.error(f"❌ Error: {e}")
 
-if not firebase_admin._apps:
-    firebase_config = st.secrets["firebase"]
-    cred = credentials.Certificate(firebase_config)
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()
-
-
-
 # Groq API settings
 GROQ_API_KEY = "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"
 GROQ_MODEL = "llama3-8b-8192"
@@ -49,6 +42,7 @@ GROQ_MODEL = "llama3-8b-8192"
 st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
 st.title("🤖 AI Chatbot")
 
+# Initialize session state for messages if not already initialized
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -57,7 +51,7 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Input box
+# Input box for user prompt
 prompt = st.chat_input("Type your message...")
 
 if prompt:
@@ -85,9 +79,13 @@ if prompt:
     with st.chat_message("assistant"):
         st.markdown(reply)
 
-    # Save to Firebase
-    db.collection("chat_history").add({
-        "prompt": prompt,
-        "response": reply,
-        "timestamp": datetime.utcnow()
-    })
+    # Save chat history to Firebase
+    try:
+        db.collection("chat_history").add({
+            "prompt": prompt,
+            "response": reply,
+            "timestamp": datetime.utcnow()
+        })
+        st.success("Chat saved to Firestore!")
+    except Exception as e:
+        st.error(f"Error saving to Firestore: {e}")
