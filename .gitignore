@@ -1,0 +1,8 @@
+# Ignore all files by default
+*
+
+# Un-ignore specific files you want to commit
+!.gitignore
+!app.py
+!requirements.txt
+!firebase_key.json
