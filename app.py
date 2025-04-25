@@ -10,46 +10,52 @@ if not firebase_admin._apps:
 db = firestore.client()
 
 
-# Function to add messages to Firestore with retry logic
-def add_to_firestore(data):
-    retry_attempts = 5
-    retry_message = st.empty()  # Create an empty placeholder for retry message
+# Groq API settings
+GROQ_API_KEY = "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"
+GROQ_MODEL = "llama3-8b-8192"
 
-    for attempt in range(retry_attempts):
-        try:
-            # Add data to Firestore collection
-            db.collection("chat_history").add(data)
-            st.success("Message added to chat history.")
-            break
-        except Exception as e:
-            retry_message.write(f"Error: {e}")
-            if attempt < retry_attempts - 1:
-                retry_message.info(f"Retrying... Attempt {attempt + 2}/{retry_attempts}")
-            else:
-                st.error("Failed to add message after several attempts.")
-                break
+st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
+st.title("🤖 AI Chatbot")
 
-# Streamlit UI
-st.title("AI Chat App")
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# Input fields for user message
-user_message = st.text_input("Enter your message:")
+# Display chat history
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# Button to submit message
-if st.button("Send"):
-    if user_message:
-        message_data = {
-            "message": user_message,
-            "timestamp": firestore.SERVER_TIMESTAMP
-        }
-        add_to_firestore(message_data)
-    else:
-        st.warning("Please enter a message.")
+# Input box
+prompt = st.chat_input("Type your message...")
 
-# Display the chat history
-st.subheader("Chat History")
-messages_ref = db.collection("chat_history").order_by("timestamp", direction=firestore.Query.ASCENDING)
-messages = messages_ref.stream()
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-for msg in messages:
-    st.write(f"**{msg.to_dict()['message']}**")
+    # Groq API call
+    with st.spinner("Groq is thinking..."):
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": GROQ_MODEL,
+                "messages": st.session_state.messages
+            }
+        )
+        result = response.json()
+        reply = result["choices"][0]["message"]["content"]
+
+    st.session_state.messages.append({"role": "assistant", "content": reply})
+    with st.chat_message("assistant"):
+        st.markdown(reply)
+
+    # Save to Firebase
+    db.collection("chat_history").add({
+        "prompt": prompt,
+        "response": reply,
+        "timestamp": datetime.utcnow()
+    })
