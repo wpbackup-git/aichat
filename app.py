@@ -4,6 +4,18 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import streamlit as st
 
+
+if st.button("Test Firestore Connection"):
+    try:
+        test_doc = {
+            "test": "Hello World",
+            "timestamp": firestore.SERVER_TIMESTAMP
+        }
+        db.collection("test_collection").add(test_doc)
+        st.success("✅ Test Write Success! Check Firestore.")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
+
 if not firebase_admin._apps:
     firebase_config = st.secrets["firebase"]
     cred = credentials.Certificate(firebase_config)
