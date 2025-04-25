@@ -2,10 +2,12 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
-import time
 
-# Load Firebase credentials from Streamlit secrets
+# Access the Firebase credentials from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
+
+# Debugging: print the key to check its format
+st.write("Firebase Key: ", firebase_key_str)
 
 # Try loading the JSON string
 try:
@@ -16,8 +18,10 @@ except json.decoder.JSONDecodeError as e:
 
 # Initialize Firebase app if not already initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_key)
+    cred = credentials.Certificate(firebase_key)  # Firebase service key
     firebase_admin.initialize_app(cred)
+else:
+    st.write("Firebase app already initialized")
 
 # Initialize Firestore
 db = firestore.client()
