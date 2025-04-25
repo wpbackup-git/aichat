@@ -1,42 +1,17 @@
-from datetime import datetime
+import streamlit as st
 import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
-import streamlit as st
+from datetime import datetime
 
-# Initialize Firebase Admin SDK (only once)
+# Initialize Firebase
 if not firebase_admin._apps:
-    cred = credentials.Certificate({
-        "type": st.secrets["firebase"]["type"],
-        "project_id": st.secrets["firebase"]["project_id"],
-        "private_key_id": st.secrets["firebase"]["private_key_id"],
-        "private_key": st.secrets["firebase"]["private_key"],
-        "client_email": st.secrets["firebase"]["client_email"],
-        "client_id": st.secrets["firebase"]["client_id"],
-        "auth_uri": st.secrets["firebase"]["auth_uri"],
-        "token_uri": st.secrets["firebase"]["token_uri"],
-        "auth_provider_x509_cert_url": st.secrets["firebase"]["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": st.secrets["firebase"]["client_x509_cert_url"]
-    })
+    cred = credentials.Certificate("firebase_key.json")
     firebase_admin.initialize_app(cred)
-
-# Initialize Firestore client
 db = firestore.client()
 
-# Test Firestore connection on button click
-if st.button("Test Firestore Connection"):
-    try:
-        test_doc = {
-            "test": "Hello World",
-            "timestamp": firestore.SERVER_TIMESTAMP
-        }
-        db.collection("test_collection").add(test_doc)
-        st.success("✅ Test Write Success! Check Firestore.")
-    except Exception as e:
-        st.error(f"❌ Error: {e}")
-
 # Groq API settings
-GROQ_API_KEY = "your_groq_api_key"
+GROQ_API_KEY = "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"
 GROQ_MODEL = "llama3-8b-8192"
 
 st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
@@ -79,12 +54,8 @@ if prompt:
         st.markdown(reply)
 
     # Save to Firebase
-    try:
-        db.collection("chat_history").add({
-            "prompt": prompt,
-            "response": reply,
-            "timestamp": datetime.utcnow()
-        })
-        st.success("Chat saved to Firestore.")
-    except Exception as e:
-        st.error(f"Error saving chat to Firestore: {e}")
+    db.collection("chat_history").add({
+        "prompt": prompt,
+        "response": reply,
+        "timestamp": datetime.utcnow()
+    })
