@@ -2,20 +2,20 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
-import time
 
+# Load Firebase credentials from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
-st.write(firebase_key_str)  # For debugging
-
-# Then parse the key
 firebase_key = json.loads(firebase_key_str)
 
-# Initialize Firebase
+# Initialize Firebase app
 cred = credentials.Certificate(firebase_key)
 firebase_admin.initialize_app(cred)
 
 # Initialize Firestore
 db = firestore.client()
+
+# Now you can use Firestore and Firebase functionality
+
 
 # Function to add messages to Firestore with retry logic
 def add_to_firestore(data):
