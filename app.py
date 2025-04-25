@@ -1,30 +1,14 @@
-import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json
+import streamlit as st
 
-# Access Firebase credentials from Streamlit secrets
-firebase_key_str = st.secrets["firebase"]["key"]
-
-# Debugging: print the key to check its format
-st.write("Firebase Key: ", firebase_key_str)
-
-# Try loading the JSON string
-try:
-    firebase_key = json.loads(firebase_key_str)
-except json.decoder.JSONDecodeError as e:
-    st.error(f"JSON Decode Error: {str(e)}")
-    st.stop()
-
-# Initialize Firebase app only if not already initialized
 if not firebase_admin._apps:
-    cred = credentials.Certificate(firebase_key)  # Firebase service key
+    firebase_config = st.secrets["firebase"]
+    cred = credentials.Certificate(firebase_config)
     firebase_admin.initialize_app(cred)
-else:
-    st.write("Firebase app already initialized")
 
-# Initialize Firestore
 db = firestore.client()
+
 
 # Function to add messages to Firestore with retry logic
 def add_to_firestore(data):
