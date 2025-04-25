@@ -3,7 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
-# Access the Firebase credentials from Streamlit secrets
+# Access Firebase credentials from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
 
 # Debugging: print the key to check its format
