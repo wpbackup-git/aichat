@@ -4,20 +4,19 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("firebase_key.json")  # Path to your Firebase service account key file
-firebase_admin.initialize_app(cred)
-db = firestore.client()  # Firestore client
+# Initialize Firebase
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_key.json")
+    firebase_admin.initialize_app(cred)
+db = firestore.client()
 
 # Groq API settings
 GROQ_API_KEY = "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"
 GROQ_MODEL = "llama3-8b-8192"
 
-# Streamlit page setup
 st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
 st.title("🤖 AI Chatbot")
 
-# Initialize session state for storing messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -26,16 +25,15 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Input box for user message
+# Input box
 prompt = st.chat_input("Type your message...")
 
 if prompt:
-    # Append user message to session state
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call Groq API for chatbot response
+    # Groq API call
     with st.spinner("Groq is thinking..."):
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -51,15 +49,13 @@ if prompt:
         result = response.json()
         reply = result["choices"][0]["message"]["content"]
 
-    # Append assistant's reply to session state
     st.session_state.messages.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.markdown(reply)
 
-    # Save conversation to Firebase Firestore
+    # Save to Firebase
     db.collection("chat_history").add({
         "prompt": prompt,
         "response": reply,
         "timestamp": datetime.utcnow()
     })
-    st.success("Data saved to Firebase!")
