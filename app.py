@@ -4,10 +4,10 @@ from firebase_admin import credentials, firestore
 import json
 import time
 
-# Get the firebase_key from Streamlit secrets
 firebase_key_str = st.secrets["firebase"]["key"]
+st.write(firebase_key_str)  # For debugging
 
-# Parse the JSON string into a dictionary
+# Then parse the key
 firebase_key = json.loads(firebase_key_str)
 
 # Initialize Firebase
