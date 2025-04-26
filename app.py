@@ -61,8 +61,12 @@ if prompt:
         st.markdown(reply)
 
     # Save chat to Firebase Firestore
-    db.collection("chat_history").add({
-        "prompt": prompt,
-        "response": reply,
-        "timestamp": datetime.utcnow()
-    })
+    try:
+        doc_ref = db.collection("chat_history").add({
+            "prompt": prompt,
+            "response": reply,
+            "timestamp": datetime.utcnow()
+        })
+        st.success("Chat saved to Firebase!")
+    except Exception as e:
+        st.error(f"Error saving to Firebase: {str(e)}")
