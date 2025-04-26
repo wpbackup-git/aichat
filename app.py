@@ -1,16 +1,22 @@
 import streamlit as st
 import requests
 import firebase_admin
-from firebase_admin import credentials, firestore
-from datetime import datetime
+import firebase_admin
+from firebase_admin import credentials, db
 
-# Initialize Firebase Admin SDK (only once)
-if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")  # Make sure this file exists in your project directory
-    firebase_admin.initialize_app(cred)
+# Initialize Firebase with Realtime Database
+cred = credentials.Certificate("firebase_key.json")
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com'
+})
 
-# Initialize Firestore DB
-db = firestore.client()
+# Write data to RTDB
+ref = db.reference("chat_history")
+ref.push({
+    "prompt": "Your prompt",
+    "response": "AI reply",
+    "timestamp": "2025-04-26T18:00:00Z"
+})
 
 # Groq API settings
 GROQ_API_KEY = "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"
