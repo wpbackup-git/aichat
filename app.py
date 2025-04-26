@@ -4,31 +4,31 @@ import firebase_admin
 from firebase_admin import credentials, db
 from datetime import datetime
 
-# Initialize Firebase with Realtime Database
+# ✅ Initialize Firebase only once
 if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com/'
-})
+    cred = credentials.Certificate("firebase_key.json")  # Your service account key JSON file
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com/'
+    })
 
-# Groq API settings
+# 🔐 Groq API Configuration
 GROQ_API_KEY = "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"
 GROQ_MODEL = "llama3-8b-8192"
 
-# Streamlit app config
+# 💬 Streamlit UI Setup
 st.set_page_config(page_title="Groq Chatbot + Firebase", page_icon="🤖")
 st.title("🤖 AI Chatbot")
 
-# Session state for messages
+# 🔄 Session state for chat messages
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display previous chat
+# 📜 Show chat history
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Input box
+# ⌨️ Chat input
 prompt = st.chat_input("Type your message...")
 
 if prompt:
@@ -37,24 +37,27 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # API Call to Groq
+    # 🤖 Call Groq API
     with st.spinner("Groq is thinking..."):
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": GROQ_MODEL,
-                "messages": st.session_state.messages
-            }
-        )
+        try:
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": GROQ_MODEL,
+                    "messages": st.session_state.messages
+                }
+            )
+            result = response.json()
+            reply = result["choices"][0]["message"]["content"]
+        except Exception as e:
+            reply = "❌ Error getting response from Groq."
+            st.error(str(e))
 
-        result = response.json()
-        reply = result["choices"][0]["message"]["content"]
-
-    # Show assistant reply
+    # Show AI reply
     st.session_state.messages.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.markdown(reply)
@@ -67,6 +70,6 @@ if prompt:
             "response": reply,
             "timestamp": datetime.utcnow().isoformat()
         })
-        st.success("Chat saved to Firebase Realtime DB!")
+        st.success("✅ Chat saved to Firebase!")
     except Exception as e:
-        st.error(f"Error saving to Firebase: {str(e)}")
+        st.error(f"❌ Error saving to Firebase: {str(e)}")
