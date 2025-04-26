@@ -8,7 +8,7 @@ from datetime import datetime
 if not firebase_admin._apps:
     cred = credentials.Certificate("firebase_key.json")
     firebase_admin.initialize_app(cred, {
-        'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com'
+        'databaseURL': 'firebase-adminsdk-fbsvc@dualchatapp.iam.gserviceaccount.com'
     })
 
 # Groq API settings
