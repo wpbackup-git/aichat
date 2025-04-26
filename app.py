@@ -1,22 +1,15 @@
 import streamlit as st
 import requests
 import firebase_admin
-import firebase_admin
 from firebase_admin import credentials, db
+from datetime import datetime
 
 # Initialize Firebase with Realtime Database
-cred = credentials.Certificate("firebase_key.json")
-firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com'
-})
-
-# Write data to RTDB
-ref = db.reference("chat_history")
-ref.push({
-    "prompt": "Your prompt",
-    "response": "AI reply",
-    "timestamp": "2025-04-26T18:00:00Z"
-})
+if not firebase_admin._apps:
+    cred = credentials.Certificate("firebase_key.json")
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': 'https://dualchatapp-default-rtdb.firebaseio.com'
+    })
 
 # Groq API settings
 GROQ_API_KEY = "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"
@@ -30,12 +23,12 @@ st.title("🤖 AI Chatbot")
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
+# Display previous chat
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-# Chat input
+# Input box
 prompt = st.chat_input("Type your message...")
 
 if prompt:
@@ -44,7 +37,7 @@ if prompt:
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Call Groq API
+    # API Call to Groq
     with st.spinner("Groq is thinking..."):
         response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
@@ -61,18 +54,19 @@ if prompt:
         result = response.json()
         reply = result["choices"][0]["message"]["content"]
 
-    # Show assistant message
+    # Show assistant reply
     st.session_state.messages.append({"role": "assistant", "content": reply})
     with st.chat_message("assistant"):
         st.markdown(reply)
 
-    # Save chat to Firebase Firestore
+    # ✅ Save chat to Firebase Realtime Database
     try:
-        doc_ref = db.collection("chat_history").add({
+        ref = db.reference("chat_history")
+        ref.push({
             "prompt": prompt,
             "response": reply,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow().isoformat()
         })
-        st.success("Chat saved to Firebase!")
+        st.success("Chat saved to Firebase Realtime DB!")
     except Exception as e:
         st.error(f"Error saving to Firebase: {str(e)}")
